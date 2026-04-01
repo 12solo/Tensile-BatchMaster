@@ -14,7 +14,7 @@ if 'master_tensile_df' not in st.session_state:
 if 'curve_storage' not in st.session_state:
     st.session_state['curve_storage'] = {}
 
-# Journal Style Global Config (Times New Roman Bold + Mirror Box)
+# Journal Style Global Config: Times New Roman Bold + Zero-Aligned Mirror Box
 AXIS_STYLE = dict(
     mirror=True, 
     ticks='outside', 
@@ -22,12 +22,16 @@ AXIS_STYLE = dict(
     linecolor='black', 
     linewidth=2.5,
     title_font=dict(family="Times New Roman", size=22, color="black"),
-    tickfont=dict(family="Times New Roman", size=18, color="black")
+    tickfont=dict(family="Times New Roman", size=18, color="black"),
+    rangemode='tozero', # Forces axis to start at zero
+    zeroline=True,
+    zerolinecolor='black',
+    zerolinewidth=2.5
 )
 
 # --- 2. Header ---
 st.title("🔬 Solomon Tensile Suite 2.1")
-st.markdown("**Scientific Journal Style: Co-Plotted Stress-Strain Analysis**")
+st.markdown("**Scientific Journal Style: Zero-Intercept Co-Plotted Analysis**")
 
 # --- 3. Sidebar ---
 with st.sidebar:
@@ -88,7 +92,7 @@ if submit and files:
             df_std['Strain_pct'] = (df_std['Ext_mm'] / l0) * 100
             df_std['Stress_MPa'] = df_std['Load_N'] / area
             
-            # Truncate at Break
+            # Truncate at Break (Max Stress)
             peak_idx = df_std['Stress_MPa'].idxmax()
             df_std = df_std.iloc[:peak_idx + 1].copy()
             
@@ -100,7 +104,7 @@ if submit and files:
                 df_std['Strain_pct'] = df_std['Strain_pct'] - shift
                 df_std = df_std[df_std['Strain_pct'] >= 0].reset_index(drop=True)
                 
-                # Add (0,0) point
+                # Force Origin (0,0) point
                 origin = pd.DataFrame({'Load_N':[0], 'Ext_mm':[0], 'Strain_pct':[0], 'Stress_MPa':[0]})
                 df_std = pd.concat([origin, df_std], ignore_index=True)
             
@@ -125,22 +129,8 @@ curves = st.session_state['curve_storage']
 if not df_m.empty:
     tabs = st.tabs(["📊 Dataset", "📉 Trends", "🎨 Batch Replicates", "🏛️ Representative Comparison", "💾 Export"])
 
-    with tabs[0]:
-        st.subheader("Summary Table")
-        st.dataframe(df_m, use_container_width=True)
-        st.subheader("Batch Statistics (Mean ± SD)")
-        st.table(df_m.groupby("Sample")[["UTS [MPa]", "Elongation [%]", "Modulus [MPa]"]].agg(['mean', 'std']))
-
-    with tabs[1]:
-        st.subheader("Inter-Sample Comparison")
-        target = st.selectbox("Property to Compare", ["UTS [MPa]", "Elongation [%]", "Modulus [MPa]"])
-        trend_df = df_m.groupby("Sample")[target].agg(['mean', 'std', 'count']).reset_index()
-        fig_trend = px.line(trend_df, x="Sample", y="mean", error_y=trend_df['std'], markers=True, template="simple_white")
-        fig_trend.update_layout(xaxis_title="<b>Sample ID</b>", yaxis_title=f"<b>{target}</b>", xaxis=AXIS_STYLE, yaxis=AXIS_STYLE)
-        st.plotly_chart(fig_trend, use_container_width=True)
-
     with tabs[2]:
-        st.subheader("Batch Replicate Overlay")
+        st.subheader("Batch Replicate Overlay (0,0 Alignment)")
         sel_batch = st.selectbox("Select Batch to Inspect:", sorted(df_m['Sample'].unique()))
         batch_files = df_m[df_m['Sample'] == sel_batch]['File'].tolist()
         
@@ -151,23 +141,22 @@ if not df_m.empty:
                 fig_batch.add_trace(go.Scatter(x=c_df['Strain_pct'], y=c_df['Stress_MPa'], 
                                                mode='lines', name=f, line=dict(width=line_w)))
         
-        fig_batch.update_layout(template="simple_white", height=700, 
-                                xaxis_title="<b>Strain (%)</b>", yaxis_title="<b>Stress (MPa)</b>", 
-                                xaxis=dict(range=[0, None], **AXIS_STYLE), yaxis=dict(range=[0, None], **AXIS_STYLE),
-                                legend=dict(font=dict(family="Times New Roman", size=14)))
+        fig_batch.update_layout(
+            template="simple_white", height=700,
+            xaxis=dict(title="<b>Strain (%)</b>", range=[0, None], **AXIS_STYLE),
+            yaxis=dict(title="<b>Stress (MPa)</b>", range=[0, None], **AXIS_STYLE),
+            legend=dict(font=dict(family="Times New Roman", size=14))
+        )
         st.plotly_chart(fig_batch, use_container_width=True)
 
     with tabs[3]:
-        st.subheader("Representative Comparison (Journal Style)")
-        st.info("Plotted from a single origin (0,0) for direct comparison of material properties.")
-        
+        st.subheader("Representative Comparison (Perfect Zero-Intercept)")
         fig_rep = go.Figure()
         unique_samples = sorted(df_m['Sample'].unique())
         
         for i, s_name in enumerate(unique_samples):
             sub = df_m[df_m['Sample'] == s_name]
             m_uts = sub['UTS [MPa]'].mean()
-            # Select curve closest to the mean UTS for the batch
             rep_f = sub.iloc[(sub['UTS [MPa]'] - m_uts).abs().argsort()[:1]]['File'].values[0]
             
             if rep_f in curves:
@@ -175,17 +164,17 @@ if not df_m.empty:
                 fig_rep.add_trace(go.Scatter(x=c_df['Strain_pct'], y=c_df['Stress_MPa'], 
                                              mode='lines', line=dict(width=line_w), name=s_name))
                 
-                # Scientific Tagging (Labeling near the peak)
+                # Labeling near peak
                 fig_rep.add_annotation(x=c_df['Strain_pct'].max(), y=c_df['Stress_MPa'].max(),
                                        text=f"<b>{s_name}</b>", showarrow=True, arrowhead=1,
                                        ax=20, ay=-30, font=dict(family="Times New Roman", size=16))
 
-        fig_rep.update_layout(template="simple_white", height=800, 
-                              xaxis_title="<b>Engineering Strain (%)</b>", 
-                              yaxis_title="<b>Engineering Stress (MPa)</b>", 
-                              xaxis=dict(range=[0, None], **AXIS_STYLE), 
-                              yaxis=dict(range=[0, None], **AXIS_STYLE),
-                              legend=dict(font=dict(family="Times New Roman", size=16)))
+        fig_rep.update_layout(
+            template="simple_white", height=800,
+            xaxis=dict(title="<b>Engineering Strain (%)</b>", range=[0, None], **AXIS_STYLE),
+            yaxis=dict(title="<b>Engineering Stress (MPa)</b>", range=[0, None], **AXIS_STYLE),
+            legend=dict(font=dict(family="Times New Roman", size=16))
+        )
         st.plotly_chart(fig_rep, use_container_width=True)
 
     with tabs[4]:
