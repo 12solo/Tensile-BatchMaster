@@ -30,7 +30,7 @@ AXIS_STYLE = dict(
 
 # --- 2. Header ---
 st.title("🔬 Solomon Tensile Suite 2.1")
-st.markdown("**Journal Ready: Clean Internal Legend & Zero-Intercept Framework**")
+st.markdown("**Unified Batch Analysis: Synchronized Zero-Intercept & Journal Plotting**")
 
 # --- 3. Sidebar ---
 with st.sidebar:
@@ -76,9 +76,7 @@ def robust_load(file):
         df = df.apply(pd.to_numeric, errors='coerce').dropna(how='all').reset_index(drop=True)
         
         cols = df.columns.tolist()
-        # Find Load column
         load_col = next((c for c in cols if any(k in c.lower() for k in ['load', 'carico', 'force', 'n'])), None)
-        # Find Extension column
         ext_col = next((c for c in cols if any(k in c.lower() for k in ['ext', 'defor', 'mm', 'disp'])), None)
         
         if load_col and ext_col:
@@ -99,18 +97,19 @@ if submit and files:
             df_std['Strain_pct'] = (df_std['Ext_mm'] / l0) * 100
             df_std['Stress_MPa'] = df_std['Load_N'] / area
             
-            # Toe-Compensation 
+            # 1. Aggressive Toe-Compensation 
             mask = (df_std['Strain_pct'] >= toe_min) & (df_std['Strain_pct'] <= toe_max)
             if len(df_std[mask]) > 5:
                 slope, intercept = np.polyfit(df_std[mask]['Strain_pct'], df_std[mask]['Stress_MPa'], 1)
                 toe_offset = -intercept / slope
                 df_std['Strain_pct'] = df_std['Strain_pct'] - toe_offset
             
-            # Ensure Start at 0,0 and truncate fracture
+            # 2. Origin Alignment & Negative Filter
             df_std = df_std[df_std['Strain_pct'] >= 0].reset_index(drop=True)
             origin = pd.DataFrame({'Load_N':[0.0], 'Ext_mm':[0.0], 'Strain_pct':[0.0], 'Stress_MPa':[0.0]})
             df_std = pd.concat([origin, df_std], ignore_index=True)
             
+            # 3. Truncate at Fracture Point
             peak_idx = df_std['Stress_MPa'].idxmax()
             df_std = df_std.iloc[:peak_idx + 1].copy()
             
@@ -144,23 +143,40 @@ if not df_m.empty:
         prop = st.selectbox("Select Property", ["UTS [MPa]", "Elongation [%]", "Modulus [MPa]"])
         trend_data = df_m.groupby("Sample")[prop].agg(['mean', 'std']).reset_index()
         fig_trend = px.line(trend_data, x="Sample", y="mean", error_y="std", markers=True, template="simple_white")
-        fig_trend.update_layout(xaxis=AXIS_STYLE, yaxis=AXIS_STYLE, xaxis_title="Sample ID", yaxis_title=prop)
+        fig_trend.update_layout(xaxis=AXIS_STYLE, yaxis=AXIS_STYLE, xaxis_title="<b>Sample ID</b>", yaxis_title=f"<b>{prop}</b>")
         st.plotly_chart(fig_trend, use_container_width=True)
 
     with tabs[2]:
-        st.subheader("Batch Replicate Overlay")
+        st.subheader("Batch Replicate Overlay (Journal Style)")
         sel_batch = st.selectbox("Select Batch:", sorted(df_m['Sample'].unique()))
         batch_files = df_m[df_m['Sample'] == sel_batch]['File'].tolist()
+        
         fig_batch = go.Figure()
         for f in batch_files:
             if f in curves:
                 c_df = curves[f]
-                fig_batch.add_trace(go.Scatter(x=c_df['Strain_pct'], y=c_df['Stress_MPa'], mode='lines', name=f))
-        fig_batch.update_layout(template="simple_white", xaxis=dict(title="Strain (%)", range=[0, None], **AXIS_STYLE), yaxis=dict(title="Stress (MPa)", range=[0, None], **AXIS_STYLE))
+                # Replicates plotted exactly from (0,0) with Maximum Stress truncation
+                fig_batch.add_trace(go.Scatter(x=c_df['Strain_pct'], y=c_df['Stress_MPa'], 
+                                               mode='lines', line=dict(width=line_w), name=f"<i>{f}</i>"))
+        
+        fig_batch.update_layout(
+            template="simple_white", height=750, 
+            xaxis=dict(title="<b>Strain (%)</b>", range=[0, None], **AXIS_STYLE), 
+            yaxis=dict(title="<b>Stress (MPa)</b>", range=[0, None], **AXIS_STYLE),
+            showlegend=True,
+            legend=dict(
+                x=leg_x, y=leg_y,
+                xanchor='left', yanchor='top',
+                bgcolor="rgba(255, 255, 255, 0.6)", 
+                borderwidth=0,                      
+                font=dict(family="Times New Roman", size=14, color="black")
+            ),
+            margin=dict(l=80, r=40, t=40, b=80) 
+        )
         st.plotly_chart(fig_batch, use_container_width=True)
 
     with tabs[3]:
-        st.subheader("Representative Comparison")
+        st.subheader("Representative Comparison (Journal Style)")
         fig_rep = go.Figure()
         unique_samples = sorted(df_m['Sample'].unique())
         for s_name in unique_samples:
@@ -179,8 +195,8 @@ if not df_m.empty:
             legend=dict(
                 x=leg_x, y=leg_y,
                 xanchor='left', yanchor='top',
-                bgcolor="rgba(255, 255, 255, 0.6)", # Transparent background
-                borderwidth=0,                      # NO BORDER LINE
+                bgcolor="rgba(255, 255, 255, 0.6)", 
+                borderwidth=0,                      
                 font=dict(family="Times New Roman", size=18, color="black")
             ),
             margin=dict(l=80, r=40, t=40, b=80) 
