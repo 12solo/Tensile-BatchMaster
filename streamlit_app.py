@@ -14,24 +14,23 @@ if 'master_tensile_df' not in st.session_state:
 if 'curve_storage' not in st.session_state:
     st.session_state['curve_storage'] = {}
 
-# Journal Style Global Config: Times New Roman Bold + Zero-Aligned Mirror Box
+# Journal Style Global Config: Integrated Axis and Border
 AXIS_STYLE = dict(
-    mirror=True, 
+    showline=True,
+    mirror=True,           # This creates the "Border" by mirroring the axis
     ticks='outside', 
-    showline=True, 
     linecolor='black', 
-    linewidth=2.5,
+    linewidth=2.5,         # The thickness of the border/axis line
     title_font=dict(family="Times New Roman", size=22, color="black"),
     tickfont=dict(family="Times New Roman", size=18, color="black"),
-    rangemode='tozero', # Forces axis to start at zero
-    zeroline=True,
-    zerolinecolor='black',
-    zerolinewidth=2.5
+    showgrid=False,        # Clean journal look
+    zeroline=False,        # Disabled to use the 'showline' as the zero baseline
+    rangemode='tozero'
 )
 
 # --- 2. Header ---
 st.title("🔬 Solomon Tensile Suite 2.1")
-st.markdown("**Scientific Journal Style: Zero-Intercept Co-Plotted Analysis**")
+st.markdown("**Journal Ready: Integrated Axis & Border Framework**")
 
 # --- 3. Sidebar ---
 with st.sidebar:
@@ -42,11 +41,11 @@ with st.sidebar:
     area = width * thickness
     
     st.header("🎨 Plot Styling")
-    line_w = st.slider("Line Thickness", 1.0, 5.0, 2.5)
+    line_w = st.slider("Curve Thickness", 1.0, 5.0, 2.5)
     
     st.header("📂 Data Input")
     with st.form("upload_form", clear_on_submit=True):
-        batch_id = st.text_input("Batch/Sample Name", "Sample Batch 1")
+        batch_id = st.text_input("Batch/Sample Name", "Sample A")
         files = st.file_uploader("Upload Replicates (.csv, .xlsx, .txt)", type=['csv', 'xlsx', 'txt'], accept_multiple_files=True)
         submit = st.form_submit_button("Process Batch")
 
@@ -92,7 +91,7 @@ if submit and files:
             df_std['Strain_pct'] = (df_std['Ext_mm'] / l0) * 100
             df_std['Stress_MPa'] = df_std['Load_N'] / area
             
-            # Truncate at Break (Max Stress)
+            # Truncate at Maximum Stress
             peak_idx = df_std['Stress_MPa'].idxmax()
             df_std = df_std.iloc[:peak_idx + 1].copy()
             
@@ -104,16 +103,14 @@ if submit and files:
                 df_std['Strain_pct'] = df_std['Strain_pct'] - shift
                 df_std = df_std[df_std['Strain_pct'] >= 0].reset_index(drop=True)
                 
-                # Force Origin (0,0) point
+                # Origin (0,0) Injection
                 origin = pd.DataFrame({'Load_N':[0], 'Ext_mm':[0], 'Strain_pct':[0], 'Stress_MPa':[0]})
                 df_std = pd.concat([origin, df_std], ignore_index=True)
             
-            uts = df_std['Stress_MPa'].max()
-            elong = df_std['Strain_pct'].max()
-            
             batch_results.append({
                 "Sample": batch_id, "File": f.name,
-                "UTS [MPa]": uts, "Elongation [%]": elong,
+                "UTS [MPa]": df_std['Stress_MPa'].max(), 
+                "Elongation [%]": df_std['Strain_pct'].max(),
                 "Modulus [MPa]": E_slope * 100 if 'E_slope' in locals() else 0
             })
             st.session_state['curve_storage'][f.name] = df_std
@@ -129,28 +126,8 @@ curves = st.session_state['curve_storage']
 if not df_m.empty:
     tabs = st.tabs(["📊 Dataset", "📉 Trends", "🎨 Batch Replicates", "🏛️ Representative Comparison", "💾 Export"])
 
-    with tabs[2]:
-        st.subheader("Batch Replicate Overlay (0,0 Alignment)")
-        sel_batch = st.selectbox("Select Batch to Inspect:", sorted(df_m['Sample'].unique()))
-        batch_files = df_m[df_m['Sample'] == sel_batch]['File'].tolist()
-        
-        fig_batch = go.Figure()
-        for f in batch_files:
-            if f in curves:
-                c_df = curves[f]
-                fig_batch.add_trace(go.Scatter(x=c_df['Strain_pct'], y=c_df['Stress_MPa'], 
-                                               mode='lines', name=f, line=dict(width=line_w)))
-        
-        fig_batch.update_layout(
-            template="simple_white", height=700,
-            xaxis=dict(title="<b>Strain (%)</b>", range=[0, None], **AXIS_STYLE),
-            yaxis=dict(title="<b>Stress (MPa)</b>", range=[0, None], **AXIS_STYLE),
-            legend=dict(font=dict(family="Times New Roman", size=14))
-        )
-        st.plotly_chart(fig_batch, use_container_width=True)
-
     with tabs[3]:
-        st.subheader("Representative Comparison (Perfect Zero-Intercept)")
+        st.subheader("Representative Comparison (Perfect Corner Alignment)")
         fig_rep = go.Figure()
         unique_samples = sorted(df_m['Sample'].unique())
         
@@ -164,7 +141,6 @@ if not df_m.empty:
                 fig_rep.add_trace(go.Scatter(x=c_df['Strain_pct'], y=c_df['Stress_MPa'], 
                                              mode='lines', line=dict(width=line_w), name=s_name))
                 
-                # Labeling near peak
                 fig_rep.add_annotation(x=c_df['Strain_pct'].max(), y=c_df['Stress_MPa'].max(),
                                        text=f"<b>{s_name}</b>", showarrow=True, arrowhead=1,
                                        ax=20, ay=-30, font=dict(family="Times New Roman", size=16))
@@ -173,7 +149,9 @@ if not df_m.empty:
             template="simple_white", height=800,
             xaxis=dict(title="<b>Engineering Strain (%)</b>", range=[0, None], **AXIS_STYLE),
             yaxis=dict(title="<b>Engineering Stress (MPa)</b>", range=[0, None], **AXIS_STYLE),
-            legend=dict(font=dict(family="Times New Roman", size=16))
+            legend=dict(font=dict(family="Times New Roman", size=16)),
+            # Forces the axes and borders to overlap exactly
+            margin=dict(l=80, r=40, t=40, b=80) 
         )
         st.plotly_chart(fig_rep, use_container_width=True)
 
