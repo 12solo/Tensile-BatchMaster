@@ -545,20 +545,12 @@ if submit and files:
                 origin = pd.DataFrame({'Load_N':[0.0], 'Ext_mm':[0.0], 'Strain_pct':[0.0], 'Stress_MPa':[0.0]})
                 df_std = pd.concat([origin, df_std], ignore_index=True)
                 
-                # --- SMART BREAK DETECTION (STRICT TRUNCATION) ---
+                # --- SMART BREAK DETECTION (STRICT TRUNCATION AT PEAK) ---
                 peak_idx = df_std['Stress_MPa'].idxmax()
                 uts = df_std['Stress_MPa'][peak_idx]
                 
-                # Look at data strictly after the peak stress
-                post_peak = df_std.iloc[peak_idx:].copy()
-                
-                # Find the very first point where stress drops below 5% of UTS
-                break_mask = post_peak['Stress_MPa'] < (0.05 * uts)
-                if break_mask.any():
-                    # Get the exact index where the physical break occurred
-                    break_idx = break_mask.idxmax()
-                    # Truncate the dataframe strictly before the drop artifact 
-                    df_std = df_std.iloc[:break_idx].copy()
+                # We eliminate ALL data after the high stress value by truncating exactly at the peak index
+                df_std = df_std.iloc[:peak_idx + 1].copy()
 
                 # Calculate 0.2% Offset Yield
                 modulus_mpa = max_slope * 100 
@@ -782,7 +774,7 @@ if not df_m.empty:
             
             $$ \text{UTS} = \max(\sigma) = \frac{F_{\text{max}}}{A_0} $$
             
-            **Failure Detection (Break)** The point of mechanical fracture. The automated threshold detects a catastrophic structural drop-off, capturing the Stress and Elongation immediately prior to when load capacity falls below 5% of the UTS, completely truncating trailing noise artifacts.
+            **Failure Detection (Break)** The point of mechanical fracture. The data is strictly truncated immediately at the Maximum Stress point (UTS), discarding all trailing noise artifacts to ensure a clean structural drop-off.
             """)
 
         with st.expander("🔋 Energy Integrals (Work & Toughness)", expanded=False):
