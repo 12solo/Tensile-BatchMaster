@@ -54,6 +54,12 @@ html, body, [class*="css"] {
 .stApp { background: var(--bg-white); }
 .stApp::before { display: none; }
 
+/* Move everything closer to the top by overriding Streamlit's default massive top padding */
+[data-testid="block-container"] {
+    padding-top: 2rem !important; 
+    padding-bottom: 2rem !important;
+}
+
 /* ── Sidebar ──────────────────────────────────── */
 [data-testid="stSidebar"] {
     background: #ffffff !important;
@@ -211,11 +217,11 @@ def render_header():
     st.markdown(f"""
     <div style="
         background: linear-gradient(135deg, #0b1120 0%, #0f1a2e 100%);
-        padding: 1.5rem 2rem;
+        padding: 1.25rem 2rem; /* Tightened padding slightly */
         border-radius: 8px;
         border: 1px solid rgba(201,168,76,0.3);
         margin-bottom: 1.5rem;
-        margin-top: 1rem;
+        margin-top: 0rem; /* Removed the top margin */
         display: flex;
         align-items: center;
         gap: 1.5rem;
