@@ -507,7 +507,6 @@ if submit and files:
                 peak_idx = df_std['Stress_MPa'].idxmax()
                 uts = df_std['Stress_MPa'][peak_idx]
                 
-                # Truncate at break (drop below 10% of UTS after peak)
                 post_peak = df_std.iloc[peak_idx:]
                 break_candidates = post_peak[post_peak['Stress_MPa'] < (0.1 * uts)]
                 if not break_candidates.empty:
@@ -515,7 +514,7 @@ if submit and files:
                     df_std = df_std.iloc[:break_idx + 1].copy()
 
                 # Calculate 0.2% Offset Yield
-                modulus_mpa = max_slope * 100 # (Slope is MPa/%, so *100 gives MPa/100% = MPa)
+                modulus_mpa = max_slope * 100 
                 offset_stress = max_slope * (df_std['Strain_pct'] - 0.2)
                 diff = np.abs(df_std['Stress_MPa'] - offset_stress)
                 
@@ -527,9 +526,9 @@ if submit and files:
                 else:
                     yield_stress, yield_strain = np.nan, np.nan
 
-                # Integrals: Work Done (Joules) & Toughness (MJ/m^3)
-                work_done = np.trapz(df_std['Load_N'], df_std['Ext_mm'] / 1000)
-                toughness = np.trapz(df_std['Stress_MPa'], df_std['Strain_pct'] / 100)
+                # Integrals (Updated for NumPy 2.0 compatibility)
+                work_done = np.trapezoid(df_std['Load_N'], df_std['Ext_mm'] / 1000)
+                toughness = np.trapezoid(df_std['Stress_MPa'], df_std['Strain_pct'] / 100)
                 
                 # Break values
                 last_idx = len(df_std) - 1
