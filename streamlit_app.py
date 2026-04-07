@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import io
+import requests
 import re
 import os
 import base64
@@ -18,78 +19,104 @@ st.set_page_config(
 )
 
 # ==========================================
-# GLOBAL CUSTOM CSS — Midnight Navy & Gold
+# GLOBAL CUSTOM CSS — Midnight Navy & Gold Theme
 # ==========================================
 st.markdown("""
 <style>
+/* ── Google Fonts ─────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+/* ── CSS Variables ────────────────────────────── */
 :root {
     --bg-main:    #0b1120; 
     --bg-panel:   #111827; 
     --text-main:  #f8fafc; 
+    --text-muted: #94a3b8; 
     --gold:       #c9a84c; 
     --gold-dim:   #9c7a32;
     --border-color: rgba(201, 168, 76, 0.25);
-    --font-body:  'IBM Plex Sans', sans-serif;
+    
+    --font-head:  'Playfair Display', Georgia, serif;
+    --font-mono:  'IBM Plex Mono', 'Courier New', monospace;
+    --font-body:  'IBM Plex Sans', 'Segoe UI', sans-serif;
 }
-html, body, [class*="css"] { font-family: var(--font-body); color: var(--text-main); }
+
+html, body, [class*="css"] {
+    font-family: var(--font-body);
+    color: var(--text-main);
+}
 .stApp { background: var(--bg-main); }
-[data-testid="block-container"] { padding-top: 2rem !important; }
-[data-testid="stSidebar"] { background: var(--bg-panel) !important; border-right: 1px solid var(--border-color); }
-[data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] label, [data-testid="stSidebar"] p { color: var(--text-main) !important; }
-[data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: var(--gold) !important; font-weight: 700; text-transform: uppercase; }
-[data-testid="stSidebar"] hr { border-color: var(--border-color); }
-[data-testid="stSidebar"] input, [data-testid="stSidebar"] select, [data-testid="stSidebar"] textarea {
-    background: var(--bg-main) !important; border: 1px solid var(--border-color) !important; color: var(--text-main) !important;
+
+[data-testid="block-container"] {
+    padding-top: 2rem !important; 
+    padding-bottom: 2rem !important;
 }
+
+/* ── Sidebar ──────────────────────────────────── */
+[data-testid="stSidebar"] {
+    background: var(--bg-panel) !important;
+    border-right: 1px solid var(--border-color);
+}
+[data-testid="stSidebar"] .stMarkdown,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] p {
+    color: var(--text-main) !important;
+}
+.material-symbols-rounded,
+[data-testid="stIconMaterial"] {
+    font-family: "Material Symbols Rounded" !important;
+    color: var(--gold) !important;
+}
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    color: var(--gold) !important;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+[data-testid="stSidebar"] hr { border-color: var(--border-color); }
+
+/* ── Inputs ── */
+[data-testid="stSidebar"] input,
+[data-testid="stSidebar"] select,
+[data-testid="stSidebar"] textarea {
+    background: var(--bg-main) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+
+/* ── Buttons ── */
 .stButton > button {
     background: linear-gradient(135deg, var(--gold-dim), var(--gold)) !important;
-    color: var(--bg-main) !important; font-weight: 700; text-transform: uppercase;
+    color: var(--bg-main) !important;
+    font-weight: 700;
+    text-transform: uppercase;
 }
-.stButton > button:hover { background: linear-gradient(135deg, var(--gold), #e2c97e) !important; box-shadow: 0 4px 15px rgba(201,168,76,0.4) !important; }
+.stButton > button:hover {
+    background: linear-gradient(135deg, var(--gold), #e2c97e) !important;
+    box-shadow: 0 4px 15px rgba(201,168,76,0.4) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# HELPER FUNCTIONS (Defined before use)
+# HELPER COMPONENTS
 # ==========================================
 def get_base64_of_bin_file(bin_file):
-    if os.path.exists(bin_file):
-        with open(bin_file, 'rb') as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    return None
-
-def render_sidebar_brand():
-    logo_path = "LOGO.png"
-    img_b64 = get_base64_of_bin_file(logo_path)
-    if img_b64:
-        icon_html = f'<img src="data:image/png;base64,{img_b64}" style="width: 52px; height: 52px; margin: 0 auto 0.75rem auto; border-radius: 10px; display: block; box-shadow: 0 4px 12px rgba(0,0,0,0.5); object-fit: contain; background: white;">'
-    else:
-        icon_html = '<div style="width:52px; height:52px; margin:0 auto 0.75rem auto; background:#c9a84c; border-radius:10px; display:flex;align-items:center;justify-content:center; font-size:1.5rem;">🔬</div>'
-
-    st.markdown(f"""
-    <div style="padding: 1.25rem 0 0.5rem 0; text-align:center;">
-        {icon_html}
-        <div style="font-size:0.65rem; color:#c9a84c; letter-spacing:0.2em; text-transform:uppercase; margin-bottom:4px; font-weight:700;">Solomon Scientific</div>
-        <div style="font-family: 'Playfair Display'; font-size:1.1rem; font-weight:700; color:#f8fafc;">Extrapolation <span style="color:#c9a84c;">Pro</span></div>
-        <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid rgba(201,168,76,0.25); font-size:0.68rem; color:#94a3b8;">
-            Advanced Modeling Tools<br>
-            <a href='mailto:your.solomon.duf@gmail.com' style='color:#c9a84c;text-decoration:none;'>✉ Contact Developer</a>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
 
 def render_header():
     logo_path = "LOGO.png"
-    img_b64 = get_base64_of_bin_file(logo_path)
-    if img_b64:
+    if os.path.exists(logo_path):
+        img_b64 = get_base64_of_bin_file(logo_path)
         icon_html = f'<img src="data:image/png;base64,{img_b64}" style="width: 54px; height: 54px; border-radius: 8px; background: white; object-fit: contain;">'
     else:
         icon_html = '<div style="width: 54px; height: 54px; background: #c9a84c; border-radius: 8px; display: flex; align-items: center; justify-content: center;">🔬</div>'
 
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #111827 0%, #1a2540 100%); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(201,168,76,0.3); display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem;">
+    <div style="background: linear-gradient(135deg, #111827 0%, #1a2540 100%); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(201,168,76,0.3); display: flex; align-items: center; gap: 1.5rem;">
         {icon_html}
         <div>
             <div style="font-family: 'Playfair Display'; font-size: 1.75rem; font-weight: 700; color: #f0f4fb;">Tensile Extrapolation Suite</div>
@@ -106,6 +133,9 @@ def metric_card(label, value, unit=""):
     </div>
     """
 
+# ==========================================
+# PROCESSING ENGINE
+# ==========================================
 def robust_load(file):
     try:
         if file.name.endswith('.xlsx'):
@@ -123,7 +153,6 @@ def robust_load(file):
 # ==========================================
 with st.sidebar:
     render_sidebar_brand()
-    st.markdown("### 📂 Project Details")
     project_name = st.text_input("Project Name", "PBAT/PLA")
     batch_id = st.text_input("Batch ID", "Batch-001")
     st.markdown("---")
@@ -135,11 +164,11 @@ with st.sidebar:
     ym_end = st.number_input("Modulus End (%)", value=1.2)
     ref_points = st.number_input("Extrapolation Ref Points", value=50)
     st.markdown("---")
-    inset_x = st.slider("Inset X Position", 0.0, 0.8, 0.55)
-    inset_y = st.slider("Inset Y Position", 0.0, 0.8, 0.05)
+    inset_x = st.slider("Inset X", 0.0, 0.8, 0.55)
+    inset_y = st.slider("Inset Y", 0.0, 0.8, 0.05)
 
 # ==========================================
-# MAIN BODY
+# MAIN DASHBOARD
 # ==========================================
 render_header()
 uploaded_file = st.file_uploader("Upload Tensile Data", type=['csv', 'xlsx', 'txt'])
@@ -171,19 +200,23 @@ if uploaded_file:
             df_ext = pd.DataFrame({'Force (N)': L_new, 'Deformation (mm)': D_new, 'Type': 'Extrapolated'})
             df_combined = pd.concat([df_orig, df_ext], ignore_index=True)
             
+            # Normalize
             df_combined['Stress (MPa)'] = df_combined['Force (N)'] / area
             df_combined['Strain (%)'] = (df_combined['Deformation (mm)'] / gauge_length) * 100
 
+            # --- BREAK POINT TRUNCATION ---
+            # Finds the first point after UTS where stress drops below 5% of peak
             uts_val = df_combined['Stress (MPa)'].max()
             break_mask = (df_combined.index > idx_max) & (df_combined['Stress (MPa)'] < (0.05 * uts_val))
             if break_mask.any():
                 break_idx = break_mask.idxmax()
                 df_combined = df_combined.loc[:break_idx].copy()
 
+            # Modulus
             mask_ym = (df_combined['Strain (%)'] >= ym_start) & (df_combined['Strain (%)'] <= ym_end)
             E, inter_ym = np.polyfit(df_combined.loc[mask_ym, 'Deformation (mm)']/gauge_length, df_combined.loc[mask_ym, 'Stress (MPa)'], 1)
             
-            # Metrics
+            # UI Metrics
             m1, m2, m3, m4 = st.columns(4)
             m1.markdown(metric_card("Modulus", f"{E:.1f}", "MPa"), unsafe_allow_html=True)
             m2.markdown(metric_card("Peak Stress", f"{uts_val:.2f}", "MPa"), unsafe_allow_html=True)
@@ -191,7 +224,7 @@ if uploaded_file:
             m4.markdown(metric_card("Toughness", f"{np.trapezoid(df_combined['Stress (MPa)'], df_combined['Strain (%)']/100):.2f}", "MJ/m³"), unsafe_allow_html=True)
 
             # Plotting
-            plt.rcParams.update({'font.family': 'sans-serif', 'font.sans-serif': ['Arial'], 'axes.linewidth': 2, 'xtick.direction': 'in', 'ytick.direction': 'in'})
+            plt.rcParams.update({'font.family': 'Arial', 'axes.linewidth': 2, 'xtick.direction': 'in', 'ytick.direction': 'in'})
             fig, ax = plt.subplots(figsize=(10, 6))
             
             ax.plot(df_combined[df_combined['Type']=='Original']['Strain (%)'], 
