@@ -428,6 +428,33 @@ with st.sidebar:
         files = st.file_uploader("Upload Replicates (.csv, .xlsx, .txt)", type=['csv', 'xlsx', 'txt'], accept_multiple_files=True)
         submit = st.form_submit_button("⚙️ Process Batch Data", use_container_width=True)
 
+    # ── Manage Data ─────────────────────────────────
+    if not st.session_state['master_tensile_df'].empty:
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown("### 4 · Manage Data")
+        with st.expander("🗑 Delete / Replace Data"):
+            unique_samples = sorted(st.session_state['master_tensile_df']['Sample'].unique())
+            batch_to_del = st.selectbox("Delete Entire Batch", ["— Select —"] + unique_samples)
+            
+            if st.button("Delete Batch", use_container_width=True):
+                if batch_to_del != "— Select —":
+                    files_rm = st.session_state['master_tensile_df'][st.session_state['master_tensile_df']['Sample'] == batch_to_del]['File'].tolist()
+                    st.session_state['master_tensile_df'] = st.session_state['master_tensile_df'][st.session_state['master_tensile_df']['Sample'] != batch_to_del]
+                    for f in files_rm:
+                        st.session_state['curve_storage'].pop(f, None)
+                    st.rerun()
+
+            st.markdown("<div style='height:0.25rem'></div>", unsafe_allow_html=True)
+            all_files = sorted(st.session_state['master_tensile_df']['File'].tolist())
+            file_to_del = st.selectbox("Delete Single Replicate", ["— Select —"] + all_files)
+            
+            if st.button("Delete File", use_container_width=True):
+                if file_to_del != "— Select —":
+                    st.session_state['master_tensile_df'] = st.session_state['master_tensile_df'][st.session_state['master_tensile_df']['File'] != file_to_del]
+                    st.session_state['curve_storage'].pop(file_to_del, None)
+                    st.rerun()
+
+    # ── Reset Entire Workspace ──────────────────────
     if not st.session_state['master_tensile_df'].empty:
         st.markdown("<hr>", unsafe_allow_html=True)
         if st.button("🔄 Reset Entire Workspace", type="primary", use_container_width=True):
@@ -577,7 +604,8 @@ if not df_m.empty:
         "📋 Dataset Overview", 
         "🎨 Batch Replicates", 
         "🏛️ Representative Comparison", 
-        "💾 Export Data"
+        "💾 Export Data",
+        "📖 Methods"
     ])
     
     legend_config = dict(
@@ -702,6 +730,62 @@ if not df_m.empty:
                 
         st.markdown("<hr>", unsafe_allow_html=True)
         st.markdown("<p style='color:#000000; font-size:0.85rem;'><i>To download the high-resolution journal plots, navigate to the plotting tabs and click the <b>camera icon</b> located in the top-right corner of the charts.</i></p>", unsafe_allow_html=True)
+
+    with tabs[4]:
+        section_title("Documentation & Methods", "📖")
+        
+        with st.expander("📌 Pre-Processing & Toe Compensation", expanded=True):
+            st.markdown(r"""
+            **Toe Compensation** is applied to correct for initial artifactual compliance caused by machine slack, specimen seating, or non-uniform gripping.
+            
+            The algorithm dynamically searches the first 20% of the generated stress-strain curve using a sliding window to identify the **maximum linear slope** (Young's Modulus). The linear region is extrapolated back to the zero-stress axis, establishing a newly corrected origin.
+            
+            $$ \text{Toe Offset} = \frac{-\text{Intercept}_{\text{max slope}}}{\text{Max Slope}} $$
+            
+            *The entire stress-strain trace is subsequently shifted by this offset so the true elastic region intersects exactly at (0,0).*
+            """)
+        
+        with st.expander("📐 Modulus & Yield Parameters", expanded=False):
+            st.markdown(r"""
+            **Young's Modulus ($E$)** The ratio of tensile stress to tensile strain within the truly elastic portion of the test, evaluated automatically using the steepest contiguous gradient method.
+            
+            $$ E = \frac{\Delta\sigma}{\Delta\epsilon} \quad \text{(MPa)} $$
+            
+            **Yield Strength ($0.2\%$ Offset Method)** Identifies the transition from elastic to plastic deformation. A constructed line parallel to the Young's Modulus is translated $0.2\%$ along the strain axis. The intersection of this theoretical line with the empirical stress-strain curve defines the Yield Stress ($\sigma_y$).
+            
+            $$ \sigma_{\text{offset}} = E \times (\epsilon - 0.2) $$
+            """)
+
+        with st.expander("💥 Break Analysis & Ultimate Limits", expanded=False):
+            st.markdown(r"""
+            **Ultimate Tensile Strength (UTS)** The absolute maximum engineering stress sustained by the material before localized necking or failure initiates.
+            
+            $$ \text{UTS} = \max(\sigma) = \frac{F_{\text{max}}}{A_0} $$
+            
+            **Failure Detection (Break)** The point of mechanical fracture. The automated threshold detects a catastrophic structural drop-off, capturing the Stress and Elongation immediately prior to when load capacity falls below 10% of the UTS.
+            """)
+
+        with st.expander("🔋 Energy Integrals (Work & Toughness)", expanded=False):
+            st.markdown(r"""
+            **Work Done ($W$)** The absolute thermodynamic energy absorbed by the specimen to induce total failure, calculated by numerically integrating the raw Load-Extension space via the Trapezoidal rule.
+            
+            $$ W = \int_0^{x_f} F \, dx \quad \text{(Joules)} $$
+            
+            **Toughness ($U_T$)** The volumetric energy absorption capacity, representing the total area under the normalized engineering Stress-Strain curve.
+            
+            $$ U_T = \int_0^{\epsilon_f} \sigma \, d\epsilon \quad (\text{MJ/m}^3) $$
+            """)
+        
+        section_title("Auto-Generated Methods Text", "📝")
+        method_text = (
+            "Mechanical properties were evaluated under uniaxial tension. Data reduction was automated "
+            "using the Tensile Pro Suite (Solomon Scientific). Machine compliance was systematically removed via dynamic "
+            "toe-compensation by extrapolating the maximal elastic gradient to the strain-intercept. "
+            "Yield strength was established using the standard 0.2% strain offset technique. "
+            "Volumetric toughness (MJ/m³) and absolute work done (J) were calculated via trapezoidal numerical "
+            "integration of the stress-strain and load-extension failure envelopes, respectively."
+        )
+        st.text_area("Copy for your manuscript:", method_text, height=130)
 
 else:
     # --- Empty State UI ---
