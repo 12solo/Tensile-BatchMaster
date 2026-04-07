@@ -19,7 +19,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# GLOBAL CUSTOM CSS — Midnight Navy & Gold Theme
+# GLOBAL CUSTOM CSS — Full Light Theme
 # ==========================================
 st.markdown("""
 <style>
@@ -28,28 +28,33 @@ st.markdown("""
 
 /* ── CSS Variables ────────────────────────────── */
 :root {
-    /* Bold & Elegant Dark Mode Colors */
-    --bg-main:    #0b1120; /* Deep Midnight Navy */
-    --bg-panel:   #111827; /* Slightly lighter navy for cards/panels */
-    --text-main:  #f8fafc; /* Crisp off-white for primary text */
-    --text-muted: #94a3b8; /* Slate gray for secondary text */
-    --gold:       #c9a84c; /* Signature Gold */
+    --navy:       #0b1120;
+    --navy-mid:   #111827;
+    --navy-light: #1a2540;
+    --gold:       #c9a84c;
+    --gold-light: #e2c97e;
     --gold-dim:   #9c7a32;
-    --border-color: rgba(201, 168, 76, 0.25); /* Subtle gold borders */
-    
+    --bg-white:   #ffffff;
+    --bg-offwhite:#f8fafc;
+    --text-dark:  #000000; 
+    --text-muted: #111111; 
+    --border-light:#e2e8f0;
+    --accent:     #3a7bd5;
+    --red:        #e05252;
+    --green:      #3db87a;
     --font-head:  'Playfair Display', Georgia, serif;
     --font-mono:  'IBM Plex Mono', 'Courier New', monospace;
     --font-body:  'IBM Plex Sans', 'Segoe UI', sans-serif;
 }
 
-/* ── Base & Body ──────────────────────────────── */
 html, body, [class*="css"] {
     font-family: var(--font-body);
-    color: var(--text-main);
+    color: var(--text-dark);
 }
-.stApp { background: var(--bg-main); }
+.stApp { background: var(--bg-white); }
 .stApp::before { display: none; }
 
+/* Move everything closer to the top by overriding Streamlit's default massive top padding */
 [data-testid="block-container"] {
     padding-top: 2rem !important; 
     padding-bottom: 2rem !important;
@@ -57,62 +62,61 @@ html, body, [class*="css"] {
 
 /* ── Sidebar ──────────────────────────────────── */
 [data-testid="stSidebar"] {
-    background: var(--bg-panel) !important;
-    border-right: 1px solid var(--border-color);
+    background: #ffffff !important;
+    border-right: 1px solid var(--border-light);
 }
 [data-testid="stSidebar"] .stMarkdown,
 [data-testid="stSidebar"] label,
 [data-testid="stSidebar"] p {
-    color: var(--text-main) !important;
+    color: #000000 !important;
     font-family: var(--font-body);
 }
 .material-symbols-rounded,
 [data-testid="stIconMaterial"] {
     font-family: "Material Symbols Rounded" !important;
-    color: var(--gold) !important;
 }
 [data-testid="stSidebar"] h1,
 [data-testid="stSidebar"] h2,
 [data-testid="stSidebar"] h3 {
-    color: var(--gold) !important;
+    color: var(--gold-dim) !important;
     font-weight: 700;
     font-size: 0.75rem;
     letter-spacing: 0.15em;
     text-transform: uppercase;
 }
-[data-testid="stSidebar"] hr { border-color: var(--border-color); margin: 1rem 0; }
+[data-testid="stSidebar"] hr { border-color: var(--border-light); margin: 1rem 0; }
 
 [data-testid="stSidebar"] input[type="text"],
 [data-testid="stSidebar"] input[type="number"],
 [data-testid="stSidebar"] textarea,
 [data-testid="stSidebar"] select {
-    background: var(--bg-main) !important;
-    border: 1px solid var(--border-color) !important;
+    background: var(--bg-white) !important;
+    border: 1px solid var(--border-light) !important;
     border-radius: 4px !important;
-    color: var(--text-main) !important;
+    color: #000000 !important;
     font-family: var(--font-mono) !important;
     font-size: 0.82rem !important;
 }
 
 [data-testid="stFileUploadDropzone"] {
-    background-color: var(--bg-main) !important;
-    border: 2px dashed var(--gold-dim) !important;
+    background-color: var(--bg-white) !important;
+    border: 2px dashed #cbd5e1 !important;
     border-radius: 6px !important;
     padding: 1rem !important;
 }
 [data-testid="stFileUploadDropzone"]:hover {
     border-color: var(--gold) !important;
-    background-color: rgba(201, 168, 76, 0.05) !important;
+    background-color: var(--bg-offwhite) !important;
 }
 
 /* ── Main Area Inputs ─────────────────────────── */
 .stSelectbox > div > div,
 .stTextInput > div > div > input,
 .stNumberInput > div > div > input {
-    background: var(--bg-panel) !important;
-    border: 1px solid var(--border-color) !important;
+    background: var(--bg-white) !important;
+    border: 1px solid var(--border-light) !important;
     border-radius: 4px !important;
-    color: var(--text-main) !important;
+    color: #000000 !important;
     font-family: var(--font-mono) !important;
     font-size: 0.82rem !important;
 }
@@ -120,11 +124,11 @@ html, body, [class*="css"] {
 /* ── Buttons ──────────────────────────────────── */
 .stButton > button {
     background: linear-gradient(135deg, var(--gold-dim), var(--gold)) !important;
-    color: var(--bg-main) !important;
+    color: var(--navy) !important;
     border: none !important;
     border-radius: 3px !important;
     font-family: var(--font-body) !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     font-size: 0.78rem !important;
     letter-spacing: 0.08em !important;
     text-transform: uppercase !important;
@@ -132,32 +136,29 @@ html, body, [class*="css"] {
     transition: all 0.2s ease !important;
 }
 .stButton > button:hover {
-    background: linear-gradient(135deg, var(--gold), #e2c97e) !important;
-    box-shadow: 0 4px 15px rgba(201,168,76,0.4) !important;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light)) !important;
+    box-shadow: 0 4px 15px rgba(201,168,76,0.3) !important;
     transform: translateY(-1px) !important;
 }
 .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #8b1a1a, #e05252) !important;
+    background: linear-gradient(135deg, #8b1a1a, var(--red)) !important;
     color: white !important;
 }
 
 [data-testid="stDownloadButton"] > button {
-    background: var(--bg-panel) !important;
-    color: var(--gold) !important;
-    border: 1px solid var(--gold-dim) !important;
-}
-[data-testid="stDownloadButton"] > button:hover {
-    background: rgba(201, 168, 76, 0.1) !important;
+    background: var(--bg-offwhite) !important;
+    color: var(--navy) !important;
+    border: 1px solid var(--border-light) !important;
 }
 
 /* ── Tabs & DataFrames ─────────────────────────── */
 [data-testid="stTabs"] [role="tablist"] {
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-offwhite);
+    border-bottom: 1px solid var(--border-light);
     gap: 0; padding: 0;
 }
 [data-testid="stTabs"] [role="tab"] {
-    color: var(--text-muted) !important;
+    color: #000000 !important;
     font-family: var(--font-body) !important;
     font-size: 0.78rem !important;
     font-weight: 600 !important;
@@ -167,40 +168,32 @@ html, body, [class*="css"] {
     border-bottom: 2px solid transparent !important;
 }
 [data-testid="stTabs"] [role="tab"][aria-selected="true"] {
-    color: var(--gold) !important;
     border-bottom-color: var(--gold) !important;
-    background: var(--bg-main) !important;
+    background: var(--bg-white) !important;
 }
 
 [data-testid="stDataFrame"] {
-    border: 1px solid var(--border-color) !important;
+    border: 1px solid var(--border-light) !important;
     border-radius: 6px !important;
-    background: var(--bg-panel) !important;
+    background: var(--bg-white) !important;
 }
 [data-testid="stDataFrame"] th {
-    background: var(--bg-main) !important;
-    color: var(--gold) !important;
-    border-bottom: 1px solid var(--border-color) !important;
+    background: var(--bg-offwhite) !important;
+    color: #000000 !important;
+    border-bottom: 1px solid var(--border-light) !important;
 }
 [data-testid="stDataFrame"] td {
-    color: var(--text-main) !important;
+    color: #000000 !important;
 }
 
 [data-testid="stExpander"] {
-    border: 1px solid var(--border-color) !important;
+    border: 1px solid var(--border-light) !important;
     border-radius: 4px !important;
-    background: var(--bg-panel) !important;
+    background: var(--bg-white) !important;
 }
 [data-testid="stExpander"] summary {
-    color: var(--gold) !important;
+    color: #000000 !important;
     font-weight: 700 !important;
-}
-
-/* ── Alerts ───────────────────────────────────── */
-[data-testid="stAlert"] { 
-    background: rgba(61,184,122,0.1) !important; 
-    color: var(--text-main) !important; 
-    border: 1px solid rgba(61,184,122,0.3) !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -217,22 +210,22 @@ def render_header():
     logo_path = "LOGO.png"
     if os.path.exists(logo_path):
         img_b64 = get_base64_of_bin_file(logo_path)
-        icon_html = f'<img src="data:image/png;base64,{img_b64}" style="width: 54px; height: 54px; border-radius: 8px; object-fit: contain; box-shadow: 0 4px 20px rgba(0,0,0,0.8); flex-shrink: 0; background: white;">'
+        icon_html = f'<img src="data:image/png;base64,{img_b64}" style="width: 54px; height: 54px; border-radius: 8px; object-fit: contain; box-shadow: 0 4px 20px rgba(0,0,0,0.5); flex-shrink: 0; background: white;">'
     else:
-        icon_html = '<div style="width: 54px; height: 54px; background: linear-gradient(135deg, #9c7a32, #c9a84c); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; box-shadow: 0 4px 20px rgba(0,0,0,0.8); flex-shrink: 0;">🔬</div>'
+        icon_html = '<div style="width: 54px; height: 54px; background: linear-gradient(135deg, #9c7a32, #c9a84c); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; box-shadow: 0 4px 20px rgba(0,0,0,0.3); flex-shrink: 0;">🔬</div>'
 
     st.markdown(f"""
     <div style="
-        background: linear-gradient(135deg, #111827 0%, #1a2540 100%);
-        padding: 1.25rem 2rem; 
+        background: linear-gradient(135deg, #0b1120 0%, #0f1a2e 100%);
+        padding: 1.25rem 2rem; /* Tightened padding slightly */
         border-radius: 8px;
         border: 1px solid rgba(201,168,76,0.3);
         margin-bottom: 1.5rem;
-        margin-top: 0rem; 
+        margin-top: 0rem; /* Removed the top margin */
         display: flex;
         align-items: center;
         gap: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     ">
         {icon_html}
         <div>
@@ -247,10 +240,10 @@ def render_header():
             <div style="
                 font-family: 'IBM Plex Sans', sans-serif;
                 font-size: 0.72rem;
-                color: #94a3b8;
+                color: #a8b4c8;
                 letter-spacing: 0.2em;
                 text-transform: uppercase;
-                margin-top: 4px;
+                margin-top: 2px;
             ">Mechanical Properties & Modulus Alignment &nbsp;·&nbsp; Solomon Scientific &nbsp;·&nbsp; © 2026</div>
         </div>
     </div>
@@ -259,16 +252,15 @@ def render_header():
 def metric_card(label, value, unit=""):
     return f"""
     <div style="
-        background: #111827;
-        border: 1px solid rgba(201,168,76,0.25);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
         border-radius: 6px;
         padding: 1rem 1.25rem;
         border-top: 3px solid #c9a84c;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        height: 100%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
     ">
-        <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.68rem;color:#94a3b8;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;font-weight:700;">{label}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.35rem;color:#f8fafc;font-weight:700;">{value}<span style="font-size:0.7rem;color:#94a3b8;margin-left:4px;">{unit}</span></div>
+        <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.68rem;color:#000000;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;font-weight:700;">{label}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.35rem;color:#000000;font-weight:700;">{value}<span style="font-size:0.7rem;color:#000000;margin-left:4px;">{unit}</span></div>
     </div>
     """
 
@@ -276,19 +268,19 @@ def section_title(text, icon=""):
     st.markdown(f"""
     <div style="
         display:flex; align-items:center; gap:0.6rem;
-        background: linear-gradient(90deg, #111827 0%, #1a2540 100%);
+        background: linear-gradient(90deg, #0b1120 0%, #1a2540 100%);
         padding: 0.6rem 1.25rem;
         border-radius: 6px;
         border-left: 4px solid #c9a84c;
         margin: 1.5rem 0 1rem 0;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     ">
-        <span style="font-size:1.1rem; color:#c9a84c;">{icon}</span>
+        <span style="font-size:1.1rem; color:#f0f4fb;">{icon}</span>
         <span style="
             font-family:'IBM Plex Sans',sans-serif;
             font-size:0.8rem;
-            font-weight:700;
-            color:#f8fafc;
+            font-weight:600;
+            color:#f0f4fb;
             letter-spacing:0.15em;
             text-transform:uppercase;
         ">{text}</span>
@@ -299,9 +291,9 @@ def render_sidebar_brand():
     logo_path = "LOGO.png"
     if os.path.exists(logo_path):
         img_b64 = get_base64_of_bin_file(logo_path)
-        icon_html = f'<img src="data:image/png;base64,{img_b64}" style="width: 52px; height: 52px; margin: 0 auto 0.75rem auto; border-radius: 10px; display: block; box-shadow: 0 4px 12px rgba(0,0,0,0.5); object-fit: contain; background: white;">'
+        icon_html = f'<img src="data:image/png;base64,{img_b64}" style="width: 52px; height: 52px; margin: 0 auto 0.75rem auto; border-radius: 10px; display: block; box-shadow: 0 4px 12px rgba(0,0,0,0.1); object-fit: contain; background: white;">'
     else:
-        icon_html = '<div style="width:52px; height:52px; margin:0 auto 0.75rem auto; background:linear-gradient(135deg,#9c7a32,#c9a84c); border-radius:10px; display:flex;align-items:center;justify-content:center; font-size:1.5rem; box-shadow:0 4px 12px rgba(0,0,0,0.5);">🔬</div>'
+        icon_html = '<div style="width:52px; height:52px; margin:0 auto 0.75rem auto; background:linear-gradient(135deg,#9c7a32,#c9a84c); border-radius:10px; display:flex;align-items:center;justify-content:center; font-size:1.5rem; box-shadow:0 4px 12px rgba(0,0,0,0.1);">🔬</div>'
 
     st.markdown(f"""
     <div style="padding: 1.25rem 0 0.5rem 0; text-align:center;">
@@ -309,29 +301,28 @@ def render_sidebar_brand():
         <div style="
             font-family:'IBM Plex Sans',sans-serif;
             font-size:0.65rem;
-            color:#c9a84c;
+            color:#9c7a32;
             letter-spacing:0.2em;
             text-transform:uppercase;
             margin-bottom:4px;
-            font-weight:700;
         ">Solomon Scientific</div>
         <div style="
             font-family:'Playfair Display',Georgia,serif;
             font-size:1.1rem;
             font-weight:700;
-            color:#f8fafc;
+            color:#000000;
         ">Tensile Pro Suite <span style="color:#c9a84c;">2.1</span></div>
         <div style="
             margin-top:0.75rem;
             padding-top:0.75rem;
-            border-top:1px solid rgba(201,168,76,0.25);
+            border-top:1px solid #e2e8f0;
             font-family:'IBM Plex Sans',sans-serif;
             font-size:0.68rem;
-            color:#94a3b8;
+            color:#000000;
             font-weight:500;
         ">Batch Master Platform<br>
         <a href='mailto:your.solomon.duf@gmail.com'
-           style='color:#c9a84c;text-decoration:none;'>
+           style='color:#9c7a32;text-decoration:none;'>
             ✉ Contact Developer
         </a>
         </div>
@@ -371,12 +362,13 @@ def export_to_excel_with_logo(df, sheet_title):
 
 
 # ==========================================
-# PLOTLY THEME (STRICT JOURNAL QUALITY - PRESERVED)
+# PLOTLY THEME (STRICT JOURNAL QUALITY)
 # ==========================================
-# The plots themselves MUST stay white with black lines for journal publication!
 PLOT_BG    = "#ffffff"
 PAPER_BG   = "#ffffff"
 BLACK      = "#000000"
+GOLD       = "#c9a84c"
+WHITE      = "#ffffff"
 
 TENSILE_STYLE = dict(
     mirror=True, 
@@ -402,7 +394,7 @@ JOURNAL_CONFIG = {
 }
 
 PALETTE = [
-    "#0b1120", "#d62728", "#1f77b4", "#2ca02c", 
+    "#000000", "#d62728", "#1f77b4", "#2ca02c", 
     "#ff7f0e", "#9467bd", "#8c564b", "#e377c2"
 ]
 
@@ -478,7 +470,7 @@ with st.sidebar:
 
     st.markdown("""
     <div style="padding:1rem 0 0.5rem;text-align:center;font-family:'IBM Plex Sans',sans-serif;
-                font-size:0.65rem;color:#94a3b8;letter-spacing:0.1em;font-weight:500;">
+                font-size:0.65rem;color:#000000;letter-spacing:0.1em;font-weight:500;">
         For Research & Academic Use Only<br>Version 2.1 Pro
     </div>
     """, unsafe_allow_html=True)
@@ -567,7 +559,7 @@ if submit and files:
                 else:
                     yield_stress, yield_strain = np.nan, np.nan
 
-                # Integrals (NumPy 2.0 compatibility)
+                # Integrals (Updated for NumPy 2.0 compatibility)
                 work_done = np.trapezoid(df_std['Load_N'], df_std['Ext_mm'] / 1000)
                 toughness = np.trapezoid(df_std['Stress_MPa'], df_std['Strain_pct'] / 100)
                 
@@ -633,7 +625,7 @@ if not df_m.empty:
         section_title("Summary Table & Statistics", "📋")
         st.dataframe(df_m, use_container_width=True, height=250)
         
-        st.markdown("<br><h4 style='color:#f8fafc;font-family:Arial;'>Aggregated Batch Statistics</h4>", unsafe_allow_html=True)
+        st.markdown("<br><h4 style='color:#000000;font-family:Arial;'>Aggregated Batch Statistics</h4>", unsafe_allow_html=True)
         numeric_cols = [c for c in df_m.columns if c not in ["Sample", "File"]]
         agg_df = df_m.groupby("Sample")[numeric_cols].agg(['mean', 'std']).round(3)
         st.dataframe(agg_df, use_container_width=True)
@@ -664,7 +656,7 @@ if not df_m.empty:
 
     with tabs[2]:
         section_title("Representative Comparison (Journal Ready)", "🏛️")
-        st.markdown("<p style='color:#cbd5e1;'>Automatically selects the replicate with the UTS closest to the batch mean.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#000000;'>Automatically selects the replicate with the UTS closest to the batch mean.</p>", unsafe_allow_html=True)
         
         fig_rep = go.Figure()
         unique_samples = sorted(df_m['Sample'].unique())
@@ -692,13 +684,13 @@ if not df_m.empty:
 
     with tabs[3]:
         section_title("Comprehensive Data Export", "💾")
-        st.markdown("<p style='color:#cbd5e1;'>Download your aggregated statistics or extract the full wide-format data matrix for external plotting.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#000000;'>Download your aggregated statistics or extract the full wide-format data matrix for external plotting.</p>", unsafe_allow_html=True)
         
         c1, c2 = st.columns(2)
         
         with c1:
-            st.markdown("<h4 style='color:#f8fafc;font-family:Arial;'>1. Batch Statistics</h4>", unsafe_allow_html=True)
-            st.markdown("<p style='color:#94a3b8;font-size:0.85rem;'>Includes advanced mechanical properties for all tests.</p>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#000000;font-family:Arial;'>1. Batch Statistics</h4>", unsafe_allow_html=True)
+            st.markdown("<p style='color:#64748b;font-size:0.85rem;'>Includes advanced mechanical properties for all tests.</p>", unsafe_allow_html=True)
             
             excel_stats = export_to_excel_with_logo(df_m, "Tensile_Summary")
             st.download_button(
@@ -709,8 +701,8 @@ if not df_m.empty:
             )
             
         with c2:
-            st.markdown("<h4 style='color:#f8fafc;font-family:Arial;'>2. All Raw & Rep Curves</h4>", unsafe_allow_html=True)
-            st.markdown("<p style='color:#94a3b8;font-size:0.85rem;'>Wide-format Excel matrix. The representative sample for each batch is explicitly tagged.</p>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#000000;font-family:Arial;'>2. All Raw & Rep Curves</h4>", unsafe_allow_html=True)
+            st.markdown("<p style='color:#64748b;font-size:0.85rem;'>Wide-format Excel matrix. The representative sample for each batch is explicitly tagged.</p>", unsafe_allow_html=True)
             
             export_list = []
             unique_samples = sorted(df_m['Sample'].unique())
@@ -743,7 +735,7 @@ if not df_m.empty:
                 )
                 
         st.markdown("<hr>", unsafe_allow_html=True)
-        st.markdown("<p style='color:#94a3b8; font-size:0.85rem;'><i>To download the high-resolution journal plots, navigate to the plotting tabs and click the <b>camera icon</b> located in the top-right corner of the white charts.</i></p>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#000000; font-size:0.85rem;'><i>To download the high-resolution journal plots, navigate to the plotting tabs and click the <b>camera icon</b> located in the top-right corner of the charts.</i></p>", unsafe_allow_html=True)
 
     with tabs[4]:
         section_title("Documentation & Methods", "📖")
@@ -805,18 +797,18 @@ else:
     # --- Empty State UI ---
     st.markdown("""
     <div style="
-        margin-top:3rem; padding:3rem 2rem; background:#111827;
-        border:1px solid rgba(201, 168, 76, 0.25); box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        margin-top:3rem; padding:3rem 2rem; background:#ffffff;
+        border:1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
         border-radius:8px; text-align:center;
     ">
         <div style="font-size:3rem;margin-bottom:1rem;">📉</div>
         <div style="
             font-family:'Playfair Display',Georgia,serif;
-            font-size:1.5rem;color:#f8fafc; margin-bottom:0.5rem; font-weight:700;
+            font-size:1.5rem;color:#1e293b; margin-bottom:0.5rem; font-weight:700;
         ">Ready for Mechanical Analysis</div>
         <div style="
             font-family:'IBM Plex Sans',sans-serif;
-            font-size:0.85rem;color:#cbd5e1;
+            font-size:0.85rem;color:#000000;
             max-width:480px;margin:0 auto;line-height:1.7;
         ">
             Upload your raw Tensile data files via the <b style="color:#c9a84c;">Data Input</b> panel
