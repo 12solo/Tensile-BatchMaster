@@ -8,7 +8,7 @@ import re
 import os
 
 # --- 1. Page Configuration & Session State ---
-st.set_page_config(page_title="Solomon Tensile Suite 2.1", layout="wide")
+st.set_page_config(page_title="Solomon Tensile BATCH MASTER ", layout="wide")
 
 if 'master_tensile_df' not in st.session_state:
     st.session_state['master_tensile_df'] = pd.DataFrame()
