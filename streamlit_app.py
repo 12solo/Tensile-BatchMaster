@@ -368,15 +368,29 @@ def export_to_excel_with_logo(df, sheet_title):
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name=sheet_title)
         worksheet = writer.sheets[sheet_title]
-        # Auto-fit columns
-        for i, col in enumerate(df.columns):
-            max_len = max(len(str(col)), df[col].astype(str).map(len).max() if len(df) > 0 else 0) + 2
+        
+        # Robust Auto-fit columns (Safely handles NaNs and identical column names)
+        for i in range(df.shape[1]):
+            col_name = str(df.columns[i])
+            col_len = len(col_name)
+            
+            if len(df) > 0:
+                # Grab column by index, fill blanks, convert to text, and find max length
+                data_len = df.iloc[:, i].fillna("").astype(str).str.len().max()
+                if pd.isna(data_len):  # Fallback if column is entirely empty
+                    data_len = 0
+            else:
+                data_len = 0
+                
+            max_len = max(col_len, data_len) + 2
             worksheet.set_column(i, i, max_len)
+            
         # Insert Logo if it exists
         logo_path = "LOGO.png"
         if os.path.exists(logo_path):
             col_offset = len(df.columns) + 1
             worksheet.insert_image(1, col_offset, logo_path, {'x_scale': 0.6, 'y_scale': 0.6})
+            
     return output.getvalue()
 
 
@@ -649,38 +663,13 @@ if not df_m.empty:
             st.markdown("<h4 style='color:#000000;font-family:Arial;'>1. Batch Statistics</h4>", unsafe_allow_html=True)
             st.markdown("<p style='color:#64748b;font-size:0.85rem;'>Includes UTS, Elongation, and Modulus for all tests.</p>", unsafe_allow_html=True)
             
-           # ==========================================
-# EXPORT UTILITY (AUTO-FIT & LOGO)
-# ==========================================
-def export_to_excel_with_logo(df, sheet_title):
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name=sheet_title)
-        worksheet = writer.sheets[sheet_title]
-        
-        # Robust Auto-fit columns (Safely handles NaNs and identical column names)
-        for i in range(df.shape[1]):
-            col_name = str(df.columns[i])
-            col_len = len(col_name)
-            
-            if len(df) > 0:
-                # Grab column by index, fill blanks, convert to text, and find max length
-                data_len = df.iloc[:, i].fillna("").astype(str).str.len().max()
-                if pd.isna(data_len):  # Fallback if column is entirely empty
-                    data_len = 0
-            else:
-                data_len = 0
-                
-            max_len = max(col_len, data_len) + 2
-            worksheet.set_column(i, i, max_len)
-            
-        # Insert Logo if it exists
-        logo_path = "LOGO.png"
-        if os.path.exists(logo_path):
-            col_offset = len(df.columns) + 1
-            worksheet.insert_image(1, col_offset, logo_path, {'x_scale': 0.6, 'y_scale': 0.6})
-            
-    return output.getvalue()
+            # Export Stats to Excel
+            excel_stats = export_to_excel_with_logo(df_m, "Tensile_Summary")
+            st.download_button(
+                "📥 Download Summary (Excel)", 
+                excel_stats, 
+                "Tensile_Summary_Stats.xlsx", 
+                use_container_width=True
             )
             
         with c2:
