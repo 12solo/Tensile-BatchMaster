@@ -17,7 +17,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# GLOBAL CSS — Clean Scientific Light Theme
+# GLOBAL CSS — Ultra-Clean Flat Theme
 # ==========================================
 st.markdown("""
 <style>
@@ -41,26 +41,8 @@ st.markdown("""
     --font-serif:  'Lora', Georgia, serif;
     --font-sans:   'DM Sans', system-ui, sans-serif;
     --font-mono:   'JetBrains Mono', 'Courier New', monospace;
-    --radius:      6px;
-    --shadow-sm:   0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-md:   0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+    --radius:      4px;
 }
-
-/* ── SURGICAL CLEAN UI (Hides Popups but Keeps Sidebar Toggle) ── */
-#MainMenu { visibility: hidden !important; display: none !important; }
-.stDeployButton { display: none !important; }
-footer { visibility: hidden !important; display: none !important; }
-header { background: transparent !important; } /* Keeps the header alive for the sidebar button, but makes it invisible */
-
-/* 1. Destroy "Press Enter to apply" on Number Inputs */
-div[data-testid="InputInstructions"] { display: none !important; visibility: hidden !important; opacity: 0 !important; height: 0px !important; }
-
-/* 2. Destroy "Limit 200MB per file" and Uploader subtext */
-[data-testid="stFileUploadDropzone"] small { display: none !important; visibility: hidden !important; opacity: 0 !important; height: 0px !important; }
-
-/* 3. Destroy all Hover Tooltips */
-div[data-baseweb="tooltip"] { display: none !important; visibility: hidden !important; opacity: 0 !important; }
-[data-testid="stTooltipHoverTarget"] { pointer-events: none !important; cursor: default !important; }
 
 /* ── Reset & Base ─────────────────────────────── */
 html, body, [class*="css"] {
@@ -75,6 +57,33 @@ html, body, [class*="css"] {
     padding-top: 1.5rem !important; 
     padding-bottom: 2rem !important;
 }
+
+/* ── SURGICAL CLEAN UI (Hides Popups & Arrows) ── */
+#MainMenu { visibility: hidden !important; display: none !important; }
+.stDeployButton { display: none !important; }
+footer { visibility: hidden !important; display: none !important; }
+header { background: transparent !important; } 
+
+/* Hide "Press Enter to apply" */
+div[data-testid="InputInstructions"] { display: none !important; visibility: hidden !important; opacity: 0 !important; height: 0px !important; }
+
+/* Hide up/down arrows (steppers) on number inputs */
+input[type="number"]::-webkit-inner-spin-button, 
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* Clean Uploader: Hide Cloud Icon and 200MB text */
+[data-testid="stFileUploadDropzone"] svg { display: none !important; }
+[data-testid="stFileUploadDropzone"] small { display: none !important; }
+
+/* Hide Hover Tooltips */
+div[data-baseweb="tooltip"] { display: none !important; visibility: hidden !important; opacity: 0 !important; }
+[data-testid="stTooltipHoverTarget"] { pointer-events: none !important; cursor: default !important; }
 
 /* ── Sidebar ──────────────────────────────────── */
 [data-testid="stSidebar"] {
@@ -112,11 +121,13 @@ html, body, [class*="css"] {
     color: var(--ink) !important;
     font-family: var(--font-mono) !important;
     font-size: 0.82rem !important;
+    box-shadow: none !important;
 }
 [data-testid="stFileUploadDropzone"] {
     background: var(--bg) !important;
-    border: 1.5px dashed var(--border-dark) !important;
+    border: 1px dashed var(--border-dark) !important;
     border-radius: var(--radius) !important;
+    padding: 0.5rem !important;
 }
 [data-testid="stFileUploadDropzone"]:hover {
     border-color: var(--gold) !important;
@@ -132,6 +143,7 @@ html, body, [class*="css"] {
     color: var(--ink) !important;
     font-family: var(--font-mono) !important;
     font-size: 0.82rem !important;
+    box-shadow: none !important;
 }
 
 /* ── Buttons ──────────────────────────────────── */
@@ -145,11 +157,10 @@ html, body, [class*="css"] {
     font-size: 0.8rem !important;
     letter-spacing: 0.04em !important;
     padding: 0.5rem 1.1rem !important;
-    transition: background 0.15s ease, transform 0.1s ease !important;
+    box-shadow: none !important;
 }
 .stButton > button:hover {
     background: var(--ink-mid) !important;
-    transform: translateY(-1px) !important;
 }
 .stButton > button[kind="primary"] {
     background: var(--red) !important;
@@ -192,7 +203,7 @@ html, body, [class*="css"] {
     border: 1px solid var(--border) !important;
     border-radius: var(--radius) !important;
     overflow: hidden !important;
-    box-shadow: var(--shadow-sm) !important;
+    box-shadow: none !important;
 }
 [data-testid="stDataFrame"] th {
     background: var(--bg-off) !important;
@@ -214,7 +225,7 @@ html, body, [class*="css"] {
     border: 1px solid var(--border) !important;
     border-radius: var(--radius) !important;
     background: var(--bg) !important;
-    box-shadow: var(--shadow-sm) !important;
+    box-shadow: none !important;
 }
 [data-testid="stExpander"] summary {
     color: var(--ink) !important;
@@ -230,6 +241,7 @@ textarea {
     border: 1px solid var(--border-dark) !important;
     border-radius: var(--radius) !important;
     background: var(--bg-off) !important;
+    box-shadow: none !important;
 }
 
 /* ── Alerts / Success ─────────────────────────── */
@@ -237,12 +249,6 @@ textarea {
     border-radius: var(--radius) !important;
     font-family: var(--font-sans) !important;
     font-size: 0.82rem !important;
-}
-
-/* ── Slider ───────────────────────────────────── */
-[data-testid="stSlider"] [data-testid="stThumbValue"] {
-    font-family: var(--font-mono) !important;
-    font-size: 0.75rem !important;
 }
 
 /* ── Spinner ──────────────────────────────────── */
@@ -266,7 +272,7 @@ def render_header():
     logo_path = "LOGO.png"
     if os.path.exists(logo_path):
         img_b64 = get_base64(logo_path)
-        logo_html = f'<img src="data:image/png;base64,{img_b64}" style="height:44px;width:44px;object-fit:contain;border-radius:8px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.12);">'
+        logo_html = f'<img src="data:image/png;base64,{img_b64}" style="height:44px;width:44px;object-fit:contain;border-radius:8px;background:#fff;">'
     else:
         logo_html = '<span style="font-size:1.6rem;">🔬</span>'
 
@@ -275,10 +281,9 @@ def render_header():
         display:flex; align-items:center; justify-content:space-between;
         padding: 1.25rem 1.75rem;
         background: #111827;
-        border-radius: 8px;
+        border-radius: 4px;
         margin-bottom: 1.75rem;
         margin-top: 0.5rem;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.10);
     ">
         <div style="display:flex;align-items:center;gap:1rem;">
             {logo_html}
@@ -320,10 +325,9 @@ def metric_card(label, value, unit="", color_bar="#B45309"):
     <div style="
         background:#FFFFFF;
         border:1px solid #E5E7EB;
-        border-radius:6px;
+        border-radius:4px;
         padding:1rem 1.25rem;
         border-left:3px solid {color_bar};
-        box-shadow:0 1px 3px rgba(0,0,0,0.05);
         height:100%;
     ">
         <div style="
@@ -364,7 +368,7 @@ def render_sidebar_brand():
     logo_path = "LOGO.png"
     if os.path.exists(logo_path):
         img_b64 = get_base64(logo_path)
-        icon = f'<img src="data:image/png;base64,{img_b64}" style="width:42px;height:42px;object-fit:contain;border-radius:8px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.1);">'
+        icon = f'<img src="data:image/png;base64,{img_b64}" style="width:42px;height:42px;object-fit:contain;border-radius:8px;background:#fff;">'
     else:
         icon = '<div style="font-size:1.6rem;">🔬</div>'
 
@@ -384,7 +388,7 @@ def render_sidebar_brand():
         <div style="
             padding:0.5rem 0.75rem;
             background:#F3F4F6;
-            border-radius:5px;
+            border-radius:4px;
             font-family:'DM Sans',sans-serif;
             font-size:0.7rem;
             color:#374151;
@@ -478,7 +482,7 @@ with st.sidebar:
     area = width * thickness
     st.markdown(
         f'<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;'
-        f'color:#374151;background:#F3F4F6;border-radius:5px;padding:0.4rem 0.65rem;margin-top:0.25rem;">'
+        f'color:#374151;background:#F3F4F6;border-radius:4px;padding:0.4rem 0.65rem;margin-top:0.25rem;">'
         f'A₀ = <b>{area:.3f} mm²</b></div>',
         unsafe_allow_html=True
     )
@@ -503,34 +507,6 @@ with st.sidebar:
 
     if not st.session_state['master_tensile_df'].empty:
         st.markdown("<hr>", unsafe_allow_html=True)
-        st.markdown("### Manage Data")
-
-        with st.expander("Delete / Replace"):
-            samples = sorted(st.session_state['master_tensile_df']['Sample'].unique())
-            batch_to_del = st.selectbox("Delete Entire Batch", ["— select —"] + samples)
-            if st.button("Delete Batch", use_container_width=True):
-                if batch_to_del != "— select —":
-                    files_rm = st.session_state['master_tensile_df'][
-                        st.session_state['master_tensile_df']['Sample'] == batch_to_del
-                    ]['File'].tolist()
-                    st.session_state['master_tensile_df'] = st.session_state['master_tensile_df'][
-                        st.session_state['master_tensile_df']['Sample'] != batch_to_del
-                    ]
-                    for fr in files_rm:
-                        st.session_state['curve_storage'].pop(fr, None)
-                    st.rerun()
-
-            all_files = sorted(st.session_state['master_tensile_df']['File'].tolist())
-            file_to_del = st.selectbox("Delete Single Replicate", ["— select —"] + all_files)
-            if st.button("Delete Replicate", use_container_width=True):
-                if file_to_del != "— select —":
-                    st.session_state['master_tensile_df'] = st.session_state['master_tensile_df'][
-                        st.session_state['master_tensile_df']['File'] != file_to_del
-                    ]
-                    st.session_state['curve_storage'].pop(file_to_del, None)
-                    st.rerun()
-
-        st.markdown("<div style='height:0.25rem'></div>", unsafe_allow_html=True)
         if st.button("↺  Reset Workspace", type="primary", use_container_width=True):
             st.session_state['master_tensile_df'] = pd.DataFrame()
             st.session_state['curve_storage'] = {}
@@ -603,11 +579,11 @@ if submit and files:
                                        'Strain_pct': [0.0], 'Stress_MPa': [0.0]})
                 df_std = pd.concat([origin, df_std], ignore_index=True)
 
-                # ── Break Detection (Strictly slice at peak stress) ─
+                # ── Break Detection (trim post-fracture data) ─
                 peak_idx = df_std['Stress_MPa'].idxmax()
                 uts      = df_std['Stress_MPa'][peak_idx]
 
-                # Trim the dataframe to completely drop anything after the peak
+                # Trim at fracture point — exactly at the highest stress
                 df_std = df_std.iloc[:peak_idx + 1].copy()
 
                 # ── 0.2 % Offset Yield ───────────────────────
@@ -623,6 +599,7 @@ if submit and files:
                     yield_stress = yield_strain = np.nan
 
                 # ── Energy Integrals ─────────────────────────
+                # Numpy 2.0 compatibility wrapper
                 try:
                     work_done = np.trapezoid(df_std['Load_N'], df_std['Ext_mm'] / 1000)
                     toughness = np.trapezoid(df_std['Stress_MPa'], df_std['Strain_pct'] / 100)
@@ -633,7 +610,7 @@ if submit and files:
                 # ── Break values (last point of trimmed curve) ─
                 elong_break  = df_std['Strain_pct'].iloc[-1]
                 stress_break = df_std['Stress_MPa'].iloc[-1]
-                modulus_mpa  = max_slope * 100
+                modulus_mpa  = max_slope * 100   # convert %⁻¹ → unitless ε
 
                 display_name = clean_filename(f.name)
                 batch_results.append({
@@ -804,7 +781,7 @@ if not df_m.empty:
 
         with c1:
             st.markdown("""
-            <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:6px;
+            <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:4px;
                         padding:1rem 1.25rem;margin-bottom:0.75rem;">
                 <div style="font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:600;
                             color:#111827;margin-bottom:4px;">Batch Statistics</div>
@@ -823,7 +800,7 @@ if not df_m.empty:
 
         with c2:
             st.markdown("""
-            <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:6px;
+            <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:4px;
                         padding:1rem 1.25rem;margin-bottom:0.75rem;">
                 <div style="font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:600;
                             color:#111827;margin-bottom:4px;">All Curves — Wide Format</div>
@@ -930,7 +907,7 @@ else:
         padding: 3.5rem 2.5rem;
         background: #F9FAFB;
         border: 1px solid #E5E7EB;
-        border-radius: 8px;
+        border-radius: 4px;
         text-align: center;
         max-width: 560px;
         margin-left: auto;
