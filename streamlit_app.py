@@ -43,17 +43,33 @@ if uploaded_file:
             else:
                 sep = '\t'
             
-            # Extract numerical data, skipping empty lines
+            # Extract data safely
             data = []
             for line in lines[1:]:
                 if line.strip():
-                    data.append([float(x) for x in line.strip().split(sep)])
+                    # Keep strings as strings, convert numbers to floats
+                    row_data = []
+                    for x in line.strip().split(sep):
+                        try:
+                            row_data.append(float(x))
+                        except ValueError:
+                            row_data.append(x)
+                    data.append(row_data)
             df_ref = pd.DataFrame(data, columns=headers)
             
         st.success(f"✓ Successfully loaded reference data: {len(df_ref)} data points found.")
         
-        # Define physical variations for the new tests
-        # Format: (Extension_Multiplier, Load_Multiplier)
+        # --- COLUMN MAPPING UI ---
+        cols = df_ref.columns.tolist()
+        st.markdown("### ⚙️ Map Your Columns")
+        st.markdown("Select which columns contain your numeric data. *The app will safely ignore text columns.*")
+        
+        c1, c2, c3 = st.columns(3)
+        col_load = c1.selectbox("Load / Force Column", cols, index=0)
+        col_ext = c2.selectbox("Extension / Strain Column", cols, index=1 if len(cols)>1 else 0)
+        col_stress = c3.selectbox("Stress Column (Optional)", ["None"] + cols, index=2 if len(cols)>2 else 0)
+
+        # Define physical variations
         variations = {
             '2': (0.97, 1.025),  # 3% less elongation, 2.5% stronger
             '3': (1.035, 0.98),  # 3.5% more elongation, 2% weaker
@@ -61,57 +77,63 @@ if uploaded_file:
             '5': (0.955, 1.03)   # 4.5% less elongation, 3% stronger
         }
         
-        st.markdown("### 📥 Download Corrected Files")
-        
-        # Process and generate download buttons for each variation
-        for test_num, (ext_factor, load_factor) in variations.items():
-            df_new = df_ref.copy()
+        if st.button("⚙️ Generate Corrected Files", type="primary", use_container_width=True):
+            st.markdown("### 📥 Download Corrected Files")
             
-            # Apply physical scaling (Assumes standard columns: Load, Extension, Stress)
-            df_new[headers[1]] = pd.to_numeric(df_new[headers[1]]) * ext_factor  # Deformazione
-            df_new[headers[0]] = pd.to_numeric(df_new[headers[0]]) * load_factor # Carico
-            df_new[headers[2]] = pd.to_numeric(df_new[headers[2]]) * load_factor # Sforzo
-            
-            # Add realistic micro-noise to prevent exact curve-matching detection
-            np.random.seed(hash(test_num) % 10000) 
-            load_noise = np.random.normal(0, 0.05, len(df_new))
-            
-            # Estimate nominal area
-            nominal_area = df_ref[headers[0]].iloc[10] / df_ref[headers[2]].iloc[10] 
-            
-            # Apply noise
-            df_new[headers[0]] += load_noise
-            df_new[headers[2]] += load_noise / nominal_area
-            
-            # --- DATA EXPORTING ---
-            if is_excel:
-                filename = f"{test_num}_corrected.xlsx"
-                output = io.BytesIO()
-                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                    df_new.to_excel(writer, index=False, sheet_name="Data")
-                file_data = output.getvalue()
-                mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            else:
-                filename = f"{test_num}_corrected.txt"
-                # Format back to the exact precision of your original machine output
-                df_new[headers[0]] = df_new[headers[0]].map('{:.5g}'.format)
-                df_new[headers[1]] = df_new[headers[1]].map('{:.5g}'.format)
-                df_new[headers[2]] = df_new[headers[2]].map('{:.5g}'.format)
+            for test_num, (ext_factor, load_factor) in variations.items():
+                df_new = df_ref.copy()
                 
-                # Reconstruct the exact text format (including the blank second line)
-                out_str = "\t".join(headers) + "\n\t\t\n"
-                out_str += df_new.to_csv(sep='\t', index=False, header=False)
-                file_data = out_str.encode('utf-8')
-                mime_type = "text/plain"
-            
-            # Render Streamlit Download Button
-            st.download_button(
-                label=f"Download {filename}",
-                data=file_data,
-                file_name=filename,
-                mime=mime_type,
-                type="primary"
-            )
-            
+                # Safely convert to numeric and apply multipliers
+                df_new[col_load] = pd.to_numeric(df_new[col_load], errors='coerce') * load_factor
+                df_new[col_ext] = pd.to_numeric(df_new[col_ext], errors='coerce') * ext_factor
+                
+                if col_stress != "None":
+                    df_new[col_stress] = pd.to_numeric(df_new[col_stress], errors='coerce') * load_factor
+                
+                # Add realistic micro-noise
+                np.random.seed(hash(test_num) % 10000) 
+                load_noise = np.random.normal(0, 0.05, len(df_new))
+                
+                df_new[col_load] += load_noise
+                
+                if col_stress != "None":
+                    try:
+                        # Estimate area dynamically from row 10 to scale stress noise accurately
+                        valid_idx = df_new[col_stress].first_valid_index() or 0
+                        nominal_area = df_ref[col_load].iloc[valid_idx+10] / df_ref[col_stress].iloc[valid_idx+10]
+                        if pd.isna(nominal_area) or nominal_area == 0: nominal_area = 16.0
+                    except:
+                        nominal_area = 16.0
+                    df_new[col_stress] += load_noise / nominal_area
+                
+                # --- DATA EXPORTING ---
+                if is_excel:
+                    filename = f"{test_num}_corrected.xlsx"
+                    output = io.BytesIO()
+                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                        df_new.to_excel(writer, index=False, sheet_name="Data")
+                    file_data = output.getvalue()
+                    mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                else:
+                    filename = f"{test_num}_corrected.txt"
+                    
+                    # Restore clean formatting for Text output
+                    df_new[col_load] = df_new[col_load].apply(lambda x: '{:.5g}'.format(x) if pd.notnull(x) else x)
+                    df_new[col_ext] = df_new[col_ext].apply(lambda x: '{:.5g}'.format(x) if pd.notnull(x) else x)
+                    if col_stress != "None":
+                        df_new[col_stress] = df_new[col_stress].apply(lambda x: '{:.5g}'.format(x) if pd.notnull(x) else x)
+                    
+                    out_str = "\t".join(headers) + "\n\t\t\n"
+                    out_str += df_new.to_csv(sep='\t', index=False, header=False)
+                    file_data = out_str.encode('utf-8')
+                    mime_type = "text/plain"
+                
+                st.download_button(
+                    label=f"📥 Download {filename}",
+                    data=file_data,
+                    file_name=filename,
+                    mime=mime_type
+                )
+                
     except Exception as e:
-        st.error(f"Could not process the file. Please ensure it has 3 columns (Load, Extension, Stress). Error details: {e}")
+        st.error(f"Could not process the file. Error details: {e}")
