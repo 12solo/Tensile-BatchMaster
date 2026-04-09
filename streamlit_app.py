@@ -694,6 +694,16 @@ if not df_m.empty:
         )
         st.plotly_chart(fig_rep, use_container_width=True, config=JOURNAL_CONFIG)
 
+   # ... (End of tabs[2] code remains unchanged) ...
+        fig_rep.update_layout(
+            plot_bgcolor=PLOT_BG, paper_bgcolor=PAPER_BG, height=700,
+            xaxis=dict(title="<b>Strain (%)</b>", range=[0, None], **TENSILE_STYLE), 
+            yaxis=dict(title="<b>Stress (MPa)</b>", range=[0, None], **TENSILE_STYLE), 
+            showlegend=True, legend=legend_config, 
+            margin=dict(l=60, r=40, t=40, b=60)
+        )
+        st.plotly_chart(fig_rep, use_container_width=True, config=JOURNAL_CONFIG)
+
     # ---------------------------------------------------------
     # NEW TAB: BATCH COMPARISON (MEAN & SD BAR CHARTS)
     # ---------------------------------------------------------
