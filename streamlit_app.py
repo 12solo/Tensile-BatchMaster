@@ -612,7 +612,7 @@ if not df_m.empty:
         "📋 Dataset Overview", 
         "🎨 Batch Replicates", 
         "🏛️ Representative Comparison", 
-        "📊 Batch Comparison",  # <-- NEW TAB
+        "📊 Batch Comparison",
         "💾 Export Data",
         "📖 Methods"
     ])
@@ -620,7 +620,7 @@ if not df_m.empty:
     legend_config = dict(
         x=leg_x, y=leg_y, xanchor='left', yanchor='top',
         bgcolor="rgba(255, 255, 255, 0.9)", 
-        bordercolor=BLACK, borderwidth=0,             
+        bordercolor=BLACK, borderwidth=0,              
         font=dict(family="Arial", size=14, color=BLACK)
     )
 
@@ -684,34 +684,14 @@ if not df_m.empty:
             margin=dict(l=60, r=40, t=40, b=60)
         )
         st.plotly_chart(fig_rep, use_container_width=True, config=JOURNAL_CONFIG)
-        # ... (End of tabs[2] code remains unchanged) ...
-        fig_rep.update_layout(
-            plot_bgcolor=PLOT_BG, paper_bgcolor=PAPER_BG, height=700,
-            xaxis=dict(title="<b>Strain (%)</b>", range=[0, None], **TENSILE_STYLE), 
-            yaxis=dict(title="<b>Stress (MPa)</b>", range=[0, None], **TENSILE_STYLE), 
-            showlegend=True, legend=legend_config, 
-            margin=dict(l=60, r=40, t=40, b=60)
-        )
-        st.plotly_chart(fig_rep, use_container_width=True, config=JOURNAL_CONFIG)
-
-   # ... (End of tabs[2] code remains unchanged) ...
-        fig_rep.update_layout(
-            plot_bgcolor=PLOT_BG, paper_bgcolor=PAPER_BG, height=700,
-            xaxis=dict(title="<b>Strain (%)</b>", range=[0, None], **TENSILE_STYLE), 
-            yaxis=dict(title="<b>Stress (MPa)</b>", range=[0, None], **TENSILE_STYLE), 
-            showlegend=True, legend=legend_config, 
-            margin=dict(l=60, r=40, t=40, b=60)
-        )
-        st.plotly_chart(fig_rep, use_container_width=True, config=JOURNAL_CONFIG)
 
     # ---------------------------------------------------------
-    # NEW TAB: BATCH COMPARISON (MEAN & SD BAR CHARTS)
+    # TAB 3: BATCH COMPARISON (MEAN & SD BAR CHARTS)
     # ---------------------------------------------------------
     with tabs[3]:
         section_title("Batch Comparison & Statistics", "📊")
         st.markdown("<p style='color:#000000;'>Compare mean mechanical properties across batches. Error bars represent ±1 Standard Deviation.</p>", unsafe_allow_html=True)
 
-        # Get all numeric columns excluding metadata
         numeric_cols = [c for c in df_m.columns if c not in ["Sample", "File"]]
 
         if numeric_cols:
@@ -719,11 +699,9 @@ if not df_m.empty:
             with col1:
                 comp_metric = st.selectbox("Select Property to Compare:", numeric_cols)
             
-            # Calculate Mean and SD
             agg_stats = df_m.groupby("Sample")[comp_metric].agg(['mean', 'std']).reset_index()
-            agg_stats['std'] = agg_stats['std'].fillna(0) # Handle batches with only 1 replicate safely
+            agg_stats['std'] = agg_stats['std'].fillna(0)
 
-            # Create Bar Chart with Error Bars
             fig_bar = px.bar(
                 agg_stats,
                 x="Sample",
@@ -734,7 +712,6 @@ if not df_m.empty:
                 labels={"mean": comp_metric, "Sample": "Batch ID"}
             )
 
-            # Apply strict journal formatting (black outlines, crisp error bars)
             fig_bar.update_traces(
                 marker_line_color=BLACK,
                 marker_line_width=1.5,
@@ -754,7 +731,7 @@ if not df_m.empty:
             st.warning("No numeric data available for comparison.")
 
     # ---------------------------------------------------------
-    # TAB 4 (PREVIOUSLY TAB 3): EXPORT DATA
+    # TAB 4: EXPORT DATA
     # ---------------------------------------------------------
     with tabs[4]:
         section_title("Comprehensive Data Export", "💾")
@@ -766,12 +743,10 @@ if not df_m.empty:
             st.markdown("<h4 style='color:#000000;font-family:Arial;'>1. Batch Statistics</h4>", unsafe_allow_html=True)
             st.markdown("<p style='color:#64748b;font-size:0.85rem;'>Includes advanced mechanical properties and aggregated stats.</p>", unsafe_allow_html=True)
             
-            # Format the aggregated dataframe for Excel
             numeric_cols = [c for c in df_m.columns if c not in ["Sample", "File"]]
             agg_df = df_m.groupby("Sample")[numeric_cols].agg(['mean', 'std']).round(3)
             
             agg_export = agg_df.copy()
-            # Flatten multi-level headers so Excel handles them cleanly
             agg_export.columns = [f"{col[0]} ({col[1].upper()})" for col in agg_export.columns]
             agg_export.reset_index(inplace=True)
             
@@ -803,7 +778,6 @@ if not df_m.empty:
                 export_list = []
                 for f in batch_files:
                     if f in curves:
-                        # Extract the required columns in the requested order (Force, Deformation, Stress, Strain)
                         temp = curves[f][['Load_N', 'Ext_mm', 'Stress_MPa', 'Strain_pct']].copy().reset_index(drop=True)
                         rep_tag = " [REP]" if f == rep_f else ""
                         
@@ -817,7 +791,6 @@ if not df_m.empty:
             
                 if export_list:
                     wide_df = pd.concat(export_list, axis=1)
-                    # Assign this batch's wide dataframe to its own sheet named after the batch
                     curve_sheets[s_name] = wide_df
             
             if curve_sheets:
@@ -834,7 +807,7 @@ if not df_m.empty:
         st.markdown("<p style='color:#000000; font-size:0.85rem;'><i>To download the high-resolution journal plots, navigate to the plotting tabs and click the <b>camera icon</b> located in the top-right corner of the charts.</i></p>", unsafe_allow_html=True)
 
     # ---------------------------------------------------------
-    # TAB 5 (PREVIOUSLY TAB 4): METHODS
+    # TAB 5: METHODS
     # ---------------------------------------------------------
     with tabs[5]:
         section_title("Documentation & Methods", "📖")
