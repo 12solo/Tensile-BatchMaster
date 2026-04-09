@@ -327,33 +327,40 @@ def render_sidebar_brand():
 # ==========================================
 # EXPORT UTILITY (AUTO-FIT & LOGO)
 # ==========================================
-def export_to_excel_with_logo(df, sheet_title):
+def export_to_excel_with_logo(sheet_dict):
+    """Expects a dictionary in the format {'Sheet Name': DataFrame}"""
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name=sheet_title)
-        worksheet = writer.sheets[sheet_title]
-        
-        for i in range(df.shape[1]):
-            col_name = str(df.columns[i])
-            col_len = len(col_name)
+        for sheet_title, df in sheet_dict.items():
+            # Excel sheet names cannot exceed 31 characters and cannot contain certain symbols
+            safe_title = str(sheet_title)[:31]
+            safe_title = re.sub(r'[\\*?:/\[\]]', '_', safe_title)
             
-            if len(df) > 0:
-                data_len = df.iloc[:, i].fillna("").astype(str).str.len().max()
-                if pd.isna(data_len):  
-                    data_len = 0
-            else:
-                data_len = 0
+            df.to_excel(writer, index=False, sheet_name=safe_title)
+            worksheet = writer.sheets[safe_title]
+            
+            # Auto-fit column widths
+            for i in range(df.shape[1]):
+                col_name = str(df.columns[i])
+                col_len = len(col_name)
                 
-            max_len = max(col_len, data_len) + 2
-            worksheet.set_column(i, i, max_len)
-            
-        logo_path = "LOGO.png"
-        if os.path.exists(logo_path):
-            col_offset = len(df.columns) + 1
-            worksheet.insert_image(1, col_offset, logo_path, {'x_scale': 0.6, 'y_scale': 0.6})
-            
+                if len(df) > 0:
+                    data_len = df.iloc[:, i].fillna("").astype(str).str.len().max()
+                    if pd.isna(data_len):  
+                        data_len = 0
+                else:
+                    data_len = 0
+                    
+                max_len = max(col_len, data_len) + 2
+                worksheet.set_column(i, i, max_len)
+                
+            # Insert Logo
+            logo_path = "LOGO.png"
+            if os.path.exists(logo_path):
+                col_offset = len(df.columns) + 1
+                worksheet.insert_image(1, col_offset, logo_path, {'x_scale': 0.6, 'y_scale': 0.6})
+                
     return output.getvalue()
-
 
 # ==========================================
 # PLOTLY THEME (STRICT JOURNAL QUALITY)
@@ -685,11 +692,25 @@ if not df_m.empty:
         
         with c1:
             st.markdown("<h4 style='color:#000000;font-family:Arial;'>1. Batch Statistics</h4>", unsafe_allow_html=True)
-            st.markdown("<p style='color:#64748b;font-size:0.85rem;'>Includes advanced mechanical properties for all tests.</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color:#64748b;font-size:0.85rem;'>Includes advanced mechanical properties and aggregated stats.</p>", unsafe_allow_html=True)
             
-            excel_stats = export_to_excel_with_logo(df_m, "Tensile_Summary")
+            # Format the aggregated dataframe for Excel
+            numeric_cols = [c for c in df_m.columns if c not in ["Sample", "File"]]
+            agg_df = df_m.groupby("Sample")[numeric_cols].agg(['mean', 'std']).round(3)
+            
+            agg_export = agg_df.copy()
+            # Flatten multi-level headers so Excel handles them cleanly
+            agg_export.columns = [f"{col[0]} ({col[1].upper()})" for col in agg_export.columns]
+            agg_export.reset_index(inplace=True)
+            
+            stats_sheets = {
+                "Individual_Results": df_m,
+                "Aggregated_Stats": agg_export
+            }
+            
+            excel_stats = export_to_excel_with_logo(stats_sheets)
             st.download_button(
-                "📥 Download Summary (Excel)", 
+                "📥 Download Summary & Stats (Excel)", 
                 excel_stats, 
                 "Tensile_Summary_Stats.xlsx", 
                 use_container_width=True
@@ -697,35 +718,43 @@ if not df_m.empty:
             
         with c2:
             st.markdown("<h4 style='color:#000000;font-family:Arial;'>2. All Raw & Rep Curves</h4>", unsafe_allow_html=True)
-            st.markdown("<p style='color:#64748b;font-size:0.85rem;'>Wide-format Excel matrix. The representative sample for each batch is explicitly tagged.</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color:#64748b;font-size:0.85rem;'>Export all test curves categorized into separate sheets per batch.</p>", unsafe_allow_html=True)
             
-            export_list = []
             unique_samples = sorted(df_m['Sample'].unique())
+            curve_sheets = {}
             
             for s_name in unique_samples:
                 batch_files = df_m[df_m['Sample'] == s_name]['File'].tolist()
                 sub = df_m[df_m['Sample'] == s_name]
                 rep_f = sub.iloc[(sub['UTS [MPa]'] - sub['UTS [MPa]'].mean()).abs().argsort()[:1]]['File'].values[0]
 
+                export_list = []
                 for f in batch_files:
                     if f in curves:
-                        temp = curves[f][['Strain_pct', 'Stress_MPa']].copy().reset_index(drop=True)
+                        # Extract the required columns in the requested order (Force, Deformation, Stress, Strain)
+                        temp = curves[f][['Load_N', 'Ext_mm', 'Stress_MPa', 'Strain_pct']].copy().reset_index(drop=True)
                         rep_tag = " [REP]" if f == rep_f else ""
                         
                         temp.columns = [
-                            f"{s_name} | {f}{rep_tag} _ Strain (%)", 
-                            f"{s_name} | {f}{rep_tag} _ Stress (MPa)"
+                            f"{f}{rep_tag} _ Force (N)", 
+                            f"{f}{rep_tag} _ Deformation (mm)",
+                            f"{f}{rep_tag} _ Stress (MPa)",
+                            f"{f}{rep_tag} _ Strain (%)"
                         ]
                         export_list.append(temp)
             
-            if export_list:
-                wide_df = pd.concat(export_list, axis=1)
-                excel_curves = export_to_excel_with_logo(wide_df, "All_Tensile_Curves")
+                if export_list:
+                    wide_df = pd.concat(export_list, axis=1)
+                    # Assign this batch's wide dataframe to its own sheet named after the batch
+                    curve_sheets[s_name] = wide_df
+            
+            if curve_sheets:
+                excel_curves = export_to_excel_with_logo(curve_sheets)
                 
                 st.download_button(
                     "📥 Download All Curves (Excel)", 
                     excel_curves, 
-                    "Tensile_All_Curves_Wide.xlsx", 
+                    "Tensile_All_Curves_Categorized.xlsx", 
                     use_container_width=True
                 )
                 
